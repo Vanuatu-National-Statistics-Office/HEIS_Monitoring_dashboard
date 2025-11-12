@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+
+{% block title %}Data Management - {{ config.SURVEY_SHORT_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-5">📁 Data Management</h1>
+            <p class="lead">Upload, refresh, and export survey data</p>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item active">Data Management</li>
+                </ol>
+            </nav>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="/" class="btn btn-secondary">
+                <i class="bi bi-house"></i> Home
+            </a>
+            <a href="/dashboard" class="btn btn-primary">
+                <i class="bi bi-speedometer2"></i> Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Data Source Information -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card" style="border-top: 4px solid #CE1126;">
+                <div class="card-header text-white"
+                    style="background: linear-gradient(135deg, #CE1126 0%, #000000 100%);">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Current Data Source</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <strong>Source Type:</strong>
+                            <span class="badge bg-info">{{ data_info.source.upper() }}</span>
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Total Records:</strong>
+                            <span class="text-primary">{{ "{:,}".format(data_info.records) }}</span>
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Last Updated:</strong>
+                            <span class="text-muted">{{ data_info.last_updated[:19] }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Source Options -->
+    <div class="row">
+        <!-- Upload CSV -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100" style="border-top: 3px solid #009543;">
+                <div class="card-header text-white"
+                    style="background: linear-gradient(135deg, #009543 0%, #007a36 100%);">
+                    <h5 class="mb-0"><i class="bi bi-upload"></i> Upload CSV Data</h5>
+                </div>
+                <div class="card-body">
+                    <p>Upload a CSV file with survey data. The file should match the required format.</p>
+
+                    <div class="mb-3">
+                        <label for="csvFile" class="form-label">Select CSV File</label>
+                        <input type="file" class="form-control" id="csvFile" accept=".csv">
+                    </div>
+
+                    <button onclick="uploadCSV()" class="btn w-100 mb-2"
+                        style="background: #009543; color: white; border: none;">
+                        <i class="bi bi-upload"></i> Upload CSV
+                    </button>
+
+                    <a href="/api/download-template" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-download"></i> Download CSV Template
+                    </a>
+
+                    <div id="uploadStatus" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Survey Solutions API -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100" style="border-top: 3px solid #FCD116;">
+                <div class="card-header text-dark"
+                    style="background: linear-gradient(135deg, #FCD116 0%, #f7c400 100%);">
+                    <h5 class="mb-0"><i class="bi bi-cloud-arrow-down"></i> Survey Solutions API</h5>
+                </div>
+                <div class="card-body">
+                    <p>Automatically fetch data from Survey Solutions server.</p>
+
+                    <div class="alert alert-info">
+                        <strong>Server:</strong> {{ config.SURVEY_SOLUTIONS_SERVER }}<br>
+                        <strong>Mode:</strong> {% if config.CAPI_MODE %}CAPI (Tablet){% else %}CAWI (Web){% endif %}
+                    </div>
+
+                    <button onclick="refreshFromAPI()" class="btn w-100 mb-2"
+                        style="background: #FCD116; color: #000; border: none; font-weight: 600;">
+                        <i class="bi bi-cloud-arrow-down"></i> Fetch from API
+                    </button>
+
+                    <div class="alert alert-warning">
+                        <small><i class="bi bi-exclamation-triangle"></i> Requires API credentials in .env file</small>
+                    </div>
+
+                    <div id="apiStatus" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Refresh & Export -->
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card" style="border-top: 3px solid #CE1126;">
+                <div class="card-header text-white"
+                    style="background: linear-gradient(135deg, #CE1126 0%, #a00e1f 100%);">
+                    <h5 class="mb-0"><i class="bi bi-arrow-clockwise"></i> Refresh Data</h5>
+                </div>
+                <div class="card-body">
+                    <p>Reload data from the current configured source.</p>
+
+                    <button onclick="refreshData()" class="btn w-100"
+                        style="background: #CE1126; color: white; border: none;">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh Current Source
+                    </button>
+
+                    <div id="refreshStatus" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card" style="border-top: 3px solid #000000;">
+                <div class="card-header text-white"
+                    style="background: linear-gradient(135deg, #000000 0%, #333333 100%);">
+                    <h5 class="mb-0"><i class="bi bi-download"></i> Export Data</h5>
+                </div>
+                <div class="card-body">
+                    <p>Export current survey data to CSV format.</p>
+
+                    <a href="/api/export-data" class="btn w-100"
+                        style="background: #000000; color: white; border: none;" download>
+                        <i class="bi bi-download"></i> Export to CSV
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configuration Guide -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-gear"></i> Configuration Guide</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Configure Data Source in .env file:</h6>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="mt-3">📁 CSV File Upload</h6>
+                            <pre class="bg-light p-3"><code>DATA_SOURCE=csv
+CSV_FILE_PATH=data/survey_data.csv</code></pre>
+                        </div>
+
+                        <div class="col-md-6">
+                            <h6 class="mt-3">🌐 Survey Solutions API</h6>
+                            <pre class="bg-light p-3"><code>DATA_SOURCE=api
+SS_API_USER=your_username
+SS_API_PASSWORD=your_password</code></pre>
+                        </div>
+
+                        <div class="col-md-6">
+                            <h6 class="mt-3">🗄️ Database Connection</h6>
+                            <pre class="bg-light p-3"><code>DATA_SOURCE=database
+DATABASE_URL=postgresql://user:pass@host/db</code></pre>
+                        </div>
+
+                        <div class="col-md-6">
+                            <h6 class="mt-3">🎲 Mock Data (Testing)</h6>
+                            <pre class="bg-light p-3"><code>DATA_SOURCE=mock
+# No additional config needed</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mt-3">
+                        <i class="bi bi-info-circle"></i> After changing configuration, restart the Flask server for
+                        changes to take effect.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function uploadCSV() {
+        const fileInput = document.getElementById('csvFile');
+        const file = fileInput.files[0];
+        const statusDiv = document.getElementById('uploadStatus');
+
+        if (!file) {
+            statusDiv.innerHTML = '<div class="alert alert-danger">Please select a file</div>';
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        statusDiv.innerHTML = '<div class="alert alert-info">Uploading...</div>';
+
+        fetch('/api/upload-csv', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    statusDiv.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+                    setTimeout(() => location.reload(), 2000);
+                } else {
+                    statusDiv.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
+                }
+            })
+            .catch(error => {
+                statusDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+            });
+    }
+
+    function refreshData() {
+        const statusDiv = document.getElementById('refreshStatus');
+        statusDiv.innerHTML = '<div class="alert alert-info">Refreshing data...</div>';
+
+        fetch('/api/refresh-data', {
+            method: 'POST'
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    statusDiv.innerHTML = `<div class="alert alert-success">${data.message}<br>Records: ${data.records}</div>`;
+                    setTimeout(() => location.reload(), 2000);
+                } else {
+                    statusDiv.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
+                }
+            })
+            .catch(error => {
+                statusDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+            });
+    }
+
+    function refreshFromAPI() {
+        const statusDiv = document.getElementById('apiStatus');
+        statusDiv.innerHTML = '<div class="alert alert-info">This feature requires API credentials to be configured in .env file</div>';
+    }
+</script>
+{% endblock %}

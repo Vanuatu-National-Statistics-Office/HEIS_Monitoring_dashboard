@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ config.SURVEY_NAME }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            /* Vanuatu flag-inspired colors */
+            --primary-color: #CE1126;
+            /* Vanuatu Red */
+            --secondary-color: #009543;
+            /* Vanuatu Green */
+            --accent-color: #FCD116;
+            /* Vanuatu Yellow */
+            --dark-color: #000000;
+            /* Black */
+            --success-color: #06A77D;
+            --warning-color: #F18F01;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--dark-color) 100%);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .page-header {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-top: 4px solid var(--primary-color);
+        }
+
+        .footer {
+            background: linear-gradient(135deg, var(--dark-color) 0%, var(--primary-color) 100%);
+            color: white;
+            padding: 20px 0;
+            margin-top: 50px;
+        }
+
+        /* Custom button colors */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #a00e1f 100%);
+            border: none;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #a00e1f 0%, var(--primary-color) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(206, 17, 38, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, #007a36 100%);
+            border: none;
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(135deg, #007a36 0%, var(--secondary-color) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 149, 67, 0.3);
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%);
+            border: none;
+            color: white;
+        }
+
+        .btn-info:hover {
+            background: linear-gradient(135deg, #0284C7 0%, #0EA5E9 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(14, 165, 233, 0.3);
+        }
+
+        /* Card accents */
+        .card {
+            border-top: 3px solid var(--primary-color);
+            transition: all 0.3s;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(206, 17, 38, 0.15);
+            transform: translateY(-3px);
+        }
+
+        /* Alert with Vanuatu colors */
+        .alert-info {
+            background-color: #fff8e1;
+            border-left: 4px solid var(--accent-color);
+            color: #333;
+        }
+
+        /* Stat cards with color variations */
+        .stat-card-red {
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .stat-card-green {
+            border-left: 4px solid var(--secondary-color);
+        }
+
+        .stat-card-yellow {
+            border-left: 4px solid var(--accent-color);
+        }
+
+        /* Chart container with accent */
+        .chart-container {
+            border-top: 2px solid var(--accent-color);
+        }
+
+        /* Floating Action Button */
+        .fab-container {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 1000;
+        }
+
+        .fab-button {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .fab-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 12px rgba(206, 17, 38, 0.5);
+        }
+
+        .fab-menu {
+            position: absolute;
+            bottom: 70px;
+            right: 0;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            display: none;
+            min-width: 200px;
+        }
+
+        .fab-menu.show {
+            display: block;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fab-menu a {
+            display: block;
+            padding: 10px 15px;
+            color: #333;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.2s;
+        }
+
+        .fab-menu a:hover {
+            background: #f0f0f0;
+        }
+
+        .fab-menu a i {
+            margin-right: 10px;
+            width: 20px;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo"
+                    style="height: 40px; margin-right: 10px;">
+                <span>{{ config.SURVEY_NAME }}</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/analytics">Advanced Analytics</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/survey-solutions">
+                            <i class="bi bi-tablet"></i> Survey Solutions
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            API
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="/api/progress">Progress</a></li>
+                            <li><a class="dropdown-item" href="/api/quality">Quality Metrics</a></li>
+                            <li><a class="dropdown-item" href="/api/logistics">Logistics</a></li>
+                            <li><a class="dropdown-item" href="/api/ea-stats">EA Statistics</a></li>
+                            <li><a class="dropdown-item" href="/api/supervisors">Supervisors</a></li>
+                            <li><a class="dropdown-item" href="/api/interviewer-detailed">Interviewer Details</a></li>
+                            <li><a class="dropdown-item" href="/api/province-ea-completion">Province EA Completion</a>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item" href="/api/survey-solutions-sync">SS Sync Status</a></li>
+                            <li><a class="dropdown-item" href="/api/survey-solutions-interview-status">SS Interview
+                                    Status</a></li>
+                            <li><a class="dropdown-item" href="/api/device-sync-performance">Device Performance</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item" href="/api/provinces">Provinces</a></li>
+                            <li><a class="dropdown-item" href="/api/teams">Teams</a></li>
+                            <li><a class="dropdown-item" href="/api/interviewers">Interviewers</a></li>
+                            <li><a class="dropdown-item" href="/api/daily">Daily Progress</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Floating Action Button -->
+    <div class="fab-container">
+        <div class="fab-menu" id="fabMenu">
+            <a href="/" data-bs-toggle="tooltip" data-bs-placement="left" title="Go to homepage"><i
+                    class="bi bi-house-fill"></i> Home</a>
+            <a href="/dashboard" data-bs-toggle="tooltip" data-bs-placement="left" title="View progress dashboard"><i
+                    class="bi bi-speedometer2"></i> Dashboard</a>
+            <a href="/analytics" data-bs-toggle="tooltip" data-bs-placement="left"
+                title="View analytics and quality metrics"><i class="bi bi-graph-up-arrow"></i> Analytics</a>
+            <a href="/survey-solutions" data-bs-toggle="tooltip" data-bs-placement="left"
+                title="Monitor Survey Solutions sync status"><i class="bi bi-tablet"></i> Survey Solutions</a>
+            <a href="/embed" target="_blank" data-bs-toggle="tooltip" data-bs-placement="left"
+                title="Open embeddable dashboard"><i class="bi bi-code-square"></i> Embed View</a>
+            <hr class="my-1">
+            <a href="/api/progress" target="_blank" data-bs-toggle="tooltip" data-bs-placement="left"
+                title="API endpoint for progress data"><i class="bi bi-filetype-json"></i> API Progress</a>
+            <a href="/api/quality" target="_blank" data-bs-toggle="tooltip" data-bs-placement="left"
+                title="API endpoint for quality metrics"><i class="bi bi-shield-check"></i> API Quality</a>
+            <a href="/api/survey-solutions-sync" target="_blank" data-bs-toggle="tooltip" data-bs-placement="left"
+                title="API endpoint for sync status"><i class="bi bi-cloud-arrow-up"></i> API Sync</a>
+            <a href="/api/ea-stats" target="_blank" data-bs-toggle="tooltip" data-bs-placement="left"
+                title="API endpoint for EA statistics"><i class="bi bi-geo-alt"></i> API EA Stats</a>
+            <hr class="my-1">
+            <a href="#" onclick="window.print(); return false;" data-bs-toggle="tooltip" data-bs-placement="left"
+                title="Print current page"><i class="bi bi-printer"></i> Print Page</a>
+            <a href="#" onclick="location.reload(); return false;" data-bs-toggle="tooltip" data-bs-placement="left"
+                title="Refresh page data"><i class="bi bi-arrow-clockwise"></i> Refresh</a>
+        </div>
+        <button class="fab-button" onclick="toggleFabMenu()" data-bs-toggle="tooltip" data-bs-placement="left"
+            title="Quick Navigation Menu">
+            <i class="bi bi-three-dots-vertical"></i>
+        </button>
+    </div>
+
+    <footer class="footer">
+        <div class="container text-center">
+            <p class="mb-0">&copy; 2025 Vanuatu National Statistics Office. All rights reserved.</p>
+            <p class="mb-0 small">Household Income & Expenditure Survey Dashboard</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Initialize Bootstrap tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Toggle FAB menu
+        function toggleFabMenu() {
+            const menu = document.getElementById('fabMenu');
+            menu.classList.toggle('show');
+        }
+
+        // Close FAB menu when clicking outside
+        document.addEventListener('click', function (event) {
+            const fabContainer = document.querySelector('.fab-container');
+            const fabMenu = document.getElementById('fabMenu');
+
+            if (!fabContainer.contains(event.target)) {
+                fabMenu.classList.remove('show');
+            }
+        });
+
+        // Prevent menu close when clicking inside menu
+        document.getElementById('fabMenu').addEventListener('click', function (event) {
+            event.stopPropagation();
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

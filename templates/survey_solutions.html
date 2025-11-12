@@ -1,0 +1,325 @@
+{% extends "base.html" %}
+
+{% block title %}Survey Solutions Monitor - {{ config.SURVEY_SHORT_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-5">📱 Survey Solutions Platform Monitor</h1>
+            <p class="lead">Real-time CAPI/Tablet synchronization and data quality monitoring</p>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item active">Survey Solutions</li>
+                </ol>
+            </nav>
+        </div>
+        <div class="col-md-4 text-end">
+            <div class="btn-group mb-2" role="group">
+                <a href="/dashboard" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom"
+                    title="Go to main progress dashboard">
+                    <i class="bi bi-speedometer2"></i> Main Dashboard
+                </a>
+                <a href="/analytics" class="btn btn-success" data-bs-toggle="tooltip" data-bs-placement="bottom"
+                    title="View comprehensive analytics">
+                    <i class="bi bi-graph-up-arrow"></i> Analytics
+                </a>
+            </div>
+            <br>
+            <div class="btn-group" role="group">
+                <button onclick="window.print()" class="btn btn-secondary" data-bs-toggle="tooltip"
+                    data-bs-placement="bottom" title="Print Survey Solutions report">
+                    <i class="bi bi-printer"></i> Print
+                </button>
+                <button onclick="location.reload()" class="btn btn-primary" data-bs-toggle="tooltip"
+                    data-bs-placement="bottom" title="Refresh sync status and metrics">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                </button>
+                <a href="/api/survey-solutions-sync" class="btn btn-outline-primary" target="_blank"
+                    data-bs-toggle="tooltip" data-bs-placement="bottom" title="View raw sync data from API">
+                    <i class="bi bi-filetype-json"></i> API
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Platform Information -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-info">
+                <h5><i class="bi bi-info-circle"></i> Survey Solutions Platform Details</h5>
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>Platform:</strong> {{ config.SURVEY_PLATFORM }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Version:</strong> {{ config.SURVEY_PLATFORM_VERSION }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Mode:</strong> CAPI (Tablet-based)
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Server:</strong> <a href="{{ config.SURVEY_SOLUTIONS_SERVER }}" target="_blank">{{
+                            config.SURVEY_SOLUTIONS_SERVER }}</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Sync Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-success text-white" data-bs-toggle="tooltip" data-bs-placement="top"
+                title="Number of surveys successfully synced from tablets to server">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Synced</h5>
+                    <h2 class="display-4">{{ sync_summary.synced }}</h2>
+                    <p class="mb-0">Successfully synced</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white" data-bs-toggle="tooltip" data-bs-placement="top"
+                title="Surveys waiting to be synchronized when tablets reconnect">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Pending Sync</h5>
+                    <h2 class="display-4">{{ sync_summary.pending }}</h2>
+                    <p class="mb-0">Waiting to sync</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white" data-bs-toggle="tooltip" data-bs-placement="top"
+                title="Surveys that failed to sync due to errors - requires attention">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Sync Failed</h5>
+                    <h2 class="display-4">{{ sync_summary.failed }}</h2>
+                    <p class="mb-0">Failed to sync</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white" data-bs-toggle="tooltip" data-bs-placement="top"
+                title="Overall percentage of surveys successfully synchronized">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Sync Rate</h5>
+                    <h2 class="display-4">{{ sync_summary.sync_rate }}%</h2>
+                    <p class="mb-0">Success rate</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Quality Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card" data-bs-toggle="tooltip" data-bs-placement="top"
+                title="Average number of questions answered per survey interview">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Avg Questions Answered</h5>
+                    <h3 class="text-primary">{{ sync_summary.avg_questions_answered }}</h3>
+                    <small class="text-muted">per interview</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card" data-bs-toggle="tooltip" data-bs-placement="top"
+                title="Average number of validation errors found per survey">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Avg Validation Errors</h5>
+                    <h3 class="text-warning">{{ sync_summary.avg_invalid_answers }}</h3>
+                    <small class="text-muted">per interview</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card" data-bs-toggle="tooltip" data-bs-placement="top"
+                title="Percentage of survey questions completed on average">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Total Validation Errors</h5>
+                    <h3 class="text-danger">{{ sync_summary.total_invalid_answers }}</h3>
+                    <small class="text-muted">across all interviews</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 1: Sync Status & Interview Status -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">📡 Tablet Sync Status</h5>
+                </div>
+                <div class="card-body">
+                    {{ sync_chart|safe }}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">📋 Interview Status Distribution</h5>
+                </div>
+                <div class="card-body">
+                    {{ interview_status_chart|safe }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 2: Device Sync Performance -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">📱 Device Sync Success Rate by Enumerator</h5>
+                </div>
+                <div class="card-body">
+                    {{ device_sync_chart|safe }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 3: Validation Errors -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">⚠️ Survey Solutions Validation Errors</h5>
+                </div>
+                <div class="card-body">
+                    {{ validation_errors_chart|safe }}
+                    <div class="alert alert-warning mt-3">
+                        <strong>Note:</strong> Validation errors indicate data quality issues that need supervisor
+                        review.
+                        Common errors include: missing required fields, invalid numeric ranges, inconsistent answers, or
+                        logical constraints violations.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Survey Solutions Features -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">✅ Platform Features in Use</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li><i class="bi bi-check-circle-fill text-success"></i> <strong>Offline Data
+                                Collection</strong> - Tablets work without internet</li>
+                        <li><i class="bi bi-check-circle-fill text-success"></i> <strong>Automatic Sync</strong> - Data
+                            uploads when online</li>
+                        <li><i class="bi bi-check-circle-fill text-success"></i> <strong>Real-time Validation</strong> -
+                            Checks data quality at entry</li>
+                        <li><i class="bi bi-check-circle-fill text-success"></i> <strong>GPS Coordinates</strong> -
+                            Location tracking for interviews</li>
+                        <li><i class="bi bi-check-circle-fill text-success"></i> <strong>Supervisor Review</strong> -
+                            Multi-level approval workflow</li>
+                        <li><i class="bi bi-check-circle-fill text-success"></i> <strong>Paradata</strong> - Tracks
+                            interview timing and patterns</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">🔧 Troubleshooting Tips</h5>
+                </div>
+                <div class="card-body">
+                    <h6>If Sync is Failing:</h6>
+                    <ul>
+                        <li>Check tablet internet connectivity (WiFi/mobile data)</li>
+                        <li>Verify Survey Solutions server is accessible</li>
+                        <li>Ensure tablets have sufficient storage space</li>
+                        <li>Check for pending supervisor rejections</li>
+                        <li>Restart Survey Solutions Interviewer app</li>
+                    </ul>
+                    <h6 class="mt-3">If Validation Errors are High:</h6>
+                    <ul>
+                        <li>Review questionnaire design and validation rules</li>
+                        <li>Provide additional enumerator training</li>
+                        <li>Check for systematic data entry issues</li>
+                        <li>Review field notes for context</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Endpoints -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">🔗 Survey Solutions API Endpoints</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <code>/api/survey-solutions-sync</code>
+                            <p class="small">Sync status summary</p>
+                        </div>
+                        <div class="col-md-4">
+                            <code>/api/survey-solutions-interview-status</code>
+                            <p class="small">Interview status counts</p>
+                        </div>
+                        <div class="col-md-4">
+                            <code>/api/device-sync-performance</code>
+                            <p class="small">Device sync metrics</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            <div class="btn-group btn-group-lg" role="group">
+                <a href="/" class="btn btn-secondary">
+                    <i class="bi bi-house"></i> Home
+                </a>
+                <a href="/dashboard" class="btn btn-primary">
+                    <i class="bi bi-speedometer2"></i> Main Dashboard
+                </a>
+                <a href="/analytics" class="btn btn-success">
+                    <i class="bi bi-graph-up-arrow"></i> Analytics
+                </a>
+                <a href="{{ config.SURVEY_SOLUTIONS_SERVER }}" class="btn btn-info" target="_blank">
+                    <i class="bi bi-box-arrow-up-right"></i> Survey Solutions Server
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-refresh every 2 minutes for real-time sync monitoring
+    setTimeout(function () { location.reload(); }, 120000);
+
+    console.log('Survey Solutions monitoring loaded');
+    console.log('Sync rate:', '{{ sync_summary.sync_rate }}%');
+    console.log('Failed syncs:', {{ sync_summary.failed }});
+
+    // Alert if sync failures are high
+    const failedSyncs = {{ sync_summary.failed }};
+    const totalSurveys = {{ progress.total_surveys }};
+    if (failedSyncs > totalSurveys * 0.05) {
+        console.warn('High sync failure rate detected! Check tablet connectivity.');
+    }
+</script>
+{% endblock %}

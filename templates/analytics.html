@@ -1,0 +1,373 @@
+{% extends "base.html" %}
+
+{% block title %}Advanced Analytics - {{ config.SURVEY_SHORT_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-5">📈 Advanced Analytics Dashboard</h1>
+            <p class="lead">Comprehensive monitoring metrics for {{ config.SURVEY_NAME }}</p>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Advanced Analytics</li>
+                </ol>
+            </nav>
+        </div>
+        <div class="col-md-4 text-end">
+            <div class="btn-group mb-2" role="group">
+                <a href="/" class="btn btn-secondary" data-bs-toggle="tooltip" data-bs-placement="bottom"
+                    title="Return to homepage">
+                    <i class="bi bi-house"></i> Home
+                </a>
+                <a href="/dashboard" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom"
+                    title="Go to main progress dashboard">
+                    <i class="bi bi-speedometer2"></i> Main Dashboard
+                </a>
+            </div>
+            <br>
+            <div class="btn-group" role="group">
+                <button onclick="window.print()" class="btn btn-outline-secondary" data-bs-toggle="tooltip"
+                    data-bs-placement="bottom" title="Print analytics report">
+                    <i class="bi bi-printer"></i> Print Report
+                </button>
+                <button onclick="location.reload()" class="btn btn-outline-primary" data-bs-toggle="tooltip"
+                    data-bs-placement="bottom" title="Refresh analytics data">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                </button>
+                <button onclick="exportData()" class="btn btn-outline-success" data-bs-toggle="tooltip"
+                    data-bs-placement="bottom" title="Export analytics data to JSON">
+                    <i class="bi bi-download"></i> Export
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics Summary -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-success text-white" data-bs-toggle="tooltip" data-bs-placement="top"
+                title="Overall data quality score based on completeness and validation">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Quality Score</h5>
+                    <h2 class="display-4">{{ quality_metrics.avg_quality_score }}</h2>
+                    <p class="mb-0">Average out of 100</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white" data-bs-toggle="tooltip" data-bs-placement="top"
+                title="Percentage of surveys with GPS coordinates captured">
+                <div class="card-body text-center">
+                    <h5 class="card-title">GPS Captured</h5>
+                    <h2 class="display-4">{{ quality_metrics.gps_capture_rate }}%</h2>
+                    <p class="mb-0">Location data</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white" data-bs-toggle="tooltip" data-bs-placement="top"
+                title="Percentage of surveys with validation errors or data quality issues">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Error Rate</h5>
+                    <h2 class="display-4">{{ quality_metrics.error_rate }}%</h2>
+                    <p class="mb-0">Forms with issues</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white" data-bs-toggle="tooltip" data-bs-placement="top"
+                title="Average interview duration across all completed surveys">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Avg Duration</h5>
+                    <h2 class="display-4">{{ quality_metrics.forms_approved }}</h2>
+                    <p class="mb-0">By supervisors</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 📋 Data Quality Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">📋 Data Quality Metrics</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Quality Overview</h5>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td>Incomplete Forms</td>
+                                    <td class="text-end"><strong>{{ quality_metrics.total_incomplete_forms }}</strong>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Rejected Forms</td>
+                                    <td class="text-end"><strong>{{ quality_metrics.total_rejected_forms }}</strong>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Pending Review</td>
+                                    <td class="text-end"><strong>{{ quality_metrics.forms_pending_review }}</strong>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Sent Back</td>
+                                    <td class="text-end"><strong>{{ quality_metrics.forms_sent_back }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>Photo Attach Rate</td>
+                                    <td class="text-end"><strong>{{ quality_metrics.photo_attach_rate }}%</strong></td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            {{ quality_chart|safe }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🧭 Logistics Status -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0">🧭 Logistics & Field Conditions</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Status Summary</h5>
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Category</th>
+                                        <th class="text-center">Good/OK</th>
+                                        <th class="text-center">Poor/Faulty</th>
+                                        <th class="text-center">None</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Transport</strong></td>
+                                        <td class="text-center text-success">{{ logistics.transport_good }}</td>
+                                        <td class="text-center text-warning">{{ logistics.transport_poor }}</td>
+                                        <td class="text-center text-danger">{{ logistics.transport_none }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Network</strong></td>
+                                        <td class="text-center text-success">{{ logistics.network_good }}</td>
+                                        <td class="text-center text-warning">{{ logistics.network_poor }}</td>
+                                        <td class="text-center text-danger">{{ logistics.network_none }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Devices</strong></td>
+                                        <td class="text-center text-success">{{ logistics.devices_ok }}</td>
+                                        <td class="text-center text-warning">{{ logistics.devices_faulty +
+                                            logistics.devices_replaced }}</td>
+                                        <td class="text-center">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Power</strong></td>
+                                        <td class="text-center text-success">{{ logistics.power_good }}</td>
+                                        <td class="text-center text-warning">{{ logistics.power_poor }}</td>
+                                        <td class="text-center">-</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            {{ logistics_chart|safe }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 1: Household Status & EA Completion -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">📊 Household Status Breakdown</h5>
+                </div>
+                <div class="card-body">
+                    {{ household_status_chart|safe }}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">🗺️ EA Completion by Province</h5>
+                </div>
+                <div class="card-body">
+                    {{ ea_completion_chart|safe }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 2: Supervisor Review & Error Rates -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">👨‍💼 Supervisor Review Summary</h5>
+                </div>
+                <div class="card-body">
+                    {{ supervisor_chart|safe }}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">⚠️ Data Error Rate by Team</h5>
+                </div>
+                <div class="card-body">
+                    {{ error_rate_chart|safe }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 3: Daily Progress -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">📈 Average Daily Progress per Enumerator</h5>
+                </div>
+                <div class="card-body">
+                    {{ daily_progress_chart|safe }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enumeration Area Details Table -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">🗂️ Enumeration Area Progress Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover table-sm" id="eaTable">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Province</th>
+                                    <th>Area Council</th>
+                                    <th>EA</th>
+                                    <th class="text-center">Total HH</th>
+                                    <th class="text-center">Completed</th>
+                                    <th class="text-center">Refused</th>
+                                    <th class="text-center">Not Found</th>
+                                    <th class="text-center">Remaining</th>
+                                    <th class="text-center">Rate (%)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for _, row in ea_stats.iterrows() %}
+                                <tr>
+                                    <td>{{ row.province }}</td>
+                                    <td>{{ row.area_council }}</td>
+                                    <td><strong>{{ row.enumeration_area }}</strong></td>
+                                    <td class="text-center">{{ row.ea_total_households }}</td>
+                                    <td class="text-center text-success"><strong>{{ row.ea_completed }}</strong></td>
+                                    <td class="text-center text-danger">{{ row.ea_refused }}</td>
+                                    <td class="text-center text-warning">{{ row.ea_not_found }}</td>
+                                    <td class="text-center">{{ row.ea_remaining }}</td>
+                                    <td class="text-center">
+                                        <span class="badge 
+                                            {% if row.completion_rate_ea >= 75 %}bg-success
+                                            {% elif row.completion_rate_ea >= 50 %}bg-warning
+                                            {% else %}bg-danger{% endif %}">
+                                            {{ row.completion_rate_ea }}%
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            <div class="btn-group btn-group-lg" role="group">
+                <a href="/" class="btn btn-secondary">
+                    <i class="bi bi-house"></i> Home
+                </a>
+                <a href="/dashboard" class="btn btn-primary">
+                    <i class="bi bi-arrow-left"></i> Main Dashboard
+                </a>
+                <a href="/survey-solutions" class="btn btn-info">
+                    <i class="bi bi-tablet"></i> Survey Solutions
+                </a>
+                <a href="/embed" class="btn btn-outline-info" target="_blank">
+                    <i class="bi bi-code-square"></i> Embed View
+                </a>
+                <button onclick="window.print()" class="btn btn-success">
+                    <i class="bi bi-printer"></i> Print Report
+                </button>
+                <button onclick="exportData()" class="btn btn-warning">
+                    <i class="bi bi-download"></i> Export Data
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Export data functionality
+    function exportData() {
+        const exportMenu = confirm('Export data as JSON?\n\nClick OK for JSON or Cancel to view in browser');
+        if (exportMenu) {
+            // Download as JSON file
+            fetch('/api/ea-stats')
+                .then(response => response.json())
+                .then(data => {
+                    const dataStr = JSON.stringify(data, null, 2);
+                    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                    const url = URL.createObjectURL(dataBlob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'vanuatu_survey_data_' + new Date().toISOString().split('T')[0] + '.json';
+                    link.click();
+                    URL.revokeObjectURL(url);
+                });
+        } else {
+            // Open in new tab
+            window.open('/api/ea-stats', '_blank');
+        }
+    }
+
+    // Add DataTable functionality if jQuery is available
+    if (typeof jQuery !== 'undefined' && jQuery.fn.DataTable) {
+        $(document).ready(function () {
+            $('#eaTable').DataTable({
+                pageLength: 25,
+                order: [[8, 'desc']],
+                responsive: true
+            });
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Survey Progress Dashboard - Embed</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            padding: 15px;
+            background-color: #f8f9fa;
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #0066cc;
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .top-bar {
+            background: linear-gradient(135deg, #2E86AB 0%, #A23B72 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .top-bar h4 {
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .btn-group-sm .btn {
+            font-size: 0.875rem;
+            padding: 0.375rem 0.75rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container-fluid">
+        <!-- Top Navigation Bar -->
+        <div class="top-bar">
+            <div class="row align-items-center">
+                <div class="col-md-6 d-flex align-items-center">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo"
+                        style="height: 35px; margin-right: 10px;">
+                    <div>
+                        <h4 class="mb-0">Vanuatu HIES Survey Dashboard</h4>
+                        <small>Embeddable View - Real-time Progress Monitoring</small>
+                    </div>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <a href="/" class="btn btn-light" target="_parent" data-bs-toggle="tooltip"
+                            data-bs-placement="bottom" title="Open full site in parent window">
+                            <i class="bi bi-house"></i> Full Site
+                        </a>
+                        <a href="/dashboard" class="btn btn-light" target="_parent" data-bs-toggle="tooltip"
+                            data-bs-placement="bottom" title="Open main dashboard">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                        <a href="/analytics" class="btn btn-light" target="_parent" data-bs-toggle="tooltip"
+                            data-bs-placement="bottom" title="Open analytics page">
+                            <i class="bi bi-graph-up-arrow"></i> Analytics
+                        </a>
+                        <a href="/survey-solutions" class="btn btn-light" target="_parent" data-bs-toggle="tooltip"
+                            data-bs-placement="bottom" title="Open Survey Solutions monitoring">
+                            <i class="bi bi-tablet"></i> SS Monitor
+                        </a>
+                        <button onclick="location.reload()" class="btn btn-outline-light" data-bs-toggle="tooltip"
+                            data-bs-placement="bottom" title="Refresh embedded dashboard">
+                            <i class="bi bi-arrow-clockwise"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Metrics -->
+        <div class="row mb-4">
+            <div class="col-md-3 col-sm-6">
+                <div class="metric-card text-center" data-bs-toggle="tooltip" data-bs-placement="top"
+                    title="Total number of survey interviews across all areas">
+                    <div class="metric-value" id="total-surveys">-</div>
+                    <div class="metric-label">Total Surveys</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="metric-card text-center" data-bs-toggle="tooltip" data-bs-placement="top"
+                    title="Surveys completed and approved">
+                    <div class="metric-value text-success" id="completed-surveys">-</div>
+                    <div class="metric-label">Completed</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="metric-card text-center" data-bs-toggle="tooltip" data-bs-placement="top"
+                    title="Surveys currently being conducted">
+                    <div class="metric-value text-warning" id="inprogress-surveys">-</div>
+                    <div class="metric-label">In Progress</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="metric-card text-center" data-bs-toggle="tooltip" data-bs-placement="top"
+                    title="Percentage of surveys completed">
+                    <div class="metric-value text-info" id="completion-rate">-</div>
+                    <div class="metric-label">Completion Rate</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Gauge -->
+        <div class="row">
+            <div class="col-12">
+                <div class="chart-container">
+                    <div id="progress-gauge"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Daily Progress & Status Distribution -->
+        <div class="row">
+            <div class="col-md-8">
+                <div class="chart-container">
+                    <div id="daily-progress"></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="chart-container">
+                    <div id="status-distribution"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Province & Team Progress -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <div id="province-progress"></div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <div id="team-performance"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interviewer Leaderboard -->
+        <div class="row">
+            <div class="col-12">
+                <div class="chart-container">
+                    <div id="interviewer-leaderboard"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Initialize Bootstrap tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Base API URL (adjust for production)
+        const API_BASE = window.location.origin;
+
+        // Load Progress Data
+        async function loadProgressData() {
+            try {
+                const response = await fetch(`${API_BASE}/api/progress`);
+                const data = await response.json();
+
+                // Update metrics
+                document.getElementById('total-surveys').textContent = data.total_surveys.toLocaleString();
+                document.getElementById('completed-surveys').textContent = data.completed.toLocaleString();
+                document.getElementById('inprogress-surveys').textContent = data.in_progress.toLocaleString();
+                document.getElementById('completion-rate').textContent = data.completion_percentage.toFixed(1) + '%';
+
+                // Progress Gauge
+                Plotly.newPlot('progress-gauge', data.progress_gauge.data, data.progress_gauge.layout, { responsive: true });
+            } catch (error) {
+                console.error('Error loading progress data:', error);
+            }
+        }
+
+        // Load Daily Progress
+        async function loadDailyProgress() {
+            try {
+                const response = await fetch(`${API_BASE}/api/daily`);
+                const data = await response.json();
+                Plotly.newPlot('daily-progress', data.data, data.layout, { responsive: true });
+            } catch (error) {
+                console.error('Error loading daily progress:', error);
+            }
+        }
+
+        // Load Province Progress
+        async function loadProvinceProgress() {
+            try {
+                const response = await fetch(`${API_BASE}/api/provinces`);
+                const data = await response.json();
+                Plotly.newPlot('province-progress', data.data, data.layout, { responsive: true });
+            } catch (error) {
+                console.error('Error loading province progress:', error);
+            }
+        }
+
+        // Load Team Performance
+        async function loadTeamPerformance() {
+            try {
+                const response = await fetch(`${API_BASE}/api/teams`);
+                const data = await response.json();
+                Plotly.newPlot('team-performance', data.data, data.layout, { responsive: true });
+            } catch (error) {
+                console.error('Error loading team performance:', error);
+            }
+        }
+
+        // Load Interviewer Leaderboard
+        async function loadInterviewerLeaderboard() {
+            try {
+                const response = await fetch(`${API_BASE}/api/interviewers`);
+                const data = await response.json();
+                Plotly.newPlot('interviewer-leaderboard', data.data, data.layout, { responsive: true });
+            } catch (error) {
+                console.error('Error loading interviewer leaderboard:', error);
+            }
+        }
+
+        // Load Status Distribution
+        async function loadStatusDistribution() {
+            try {
+                const response = await fetch(`${API_BASE}/api/progress`);
+                const data = await response.json();
+                Plotly.newPlot('status-distribution', data.status_chart.data, data.status_chart.layout, { responsive: true });
+            } catch (error) {
+                console.error('Error loading status distribution:', error);
+            }
+        }
+
+        // Initialize Dashboard
+        async function initDashboard() {
+            await loadProgressData();
+            await loadDailyProgress();
+            await loadProvinceProgress();
+            await loadTeamPerformance();
+            await loadInterviewerLeaderboard();
+            await loadStatusDistribution();
+        }
+
+        // Load on page ready
+        document.addEventListener('DOMContentLoaded', initDashboard);
+
+        // Auto-refresh every 5 minutes
+        setInterval(initDashboard, 300000);
+    </script>
+</body>
+
+</html>
